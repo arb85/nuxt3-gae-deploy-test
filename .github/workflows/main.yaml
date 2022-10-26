@@ -1,0 +1,66 @@
+name: CI/CD to Google App Engine
+
+on:
+  push:
+  #   branches:
+      - main
+  #     - master
+  # pull_request:
+    branches:
+      # - production
+      # - main
+      # - master
+
+jobs:
+  ci-cd:
+    name: Build Nuxt and Deploy to Google Cloud
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node: [16]
+
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@master
+
+      - name: Setup node env 🏗
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+
+      # - name: Create .env file with GitHub Secrets 🔑
+      #   uses: SpicyPizza/create-envfile@v1
+      #   with:
+      #     envkey_CATALOG_API: ${{secrets.CATALOG_API}}
+      #     envkey_CUSTOMER_APP_TOKEN: ${{secrets.CUSTOMER_APP_TOKEN}}
+      #     file_name: .env
+
+      - name: Cache node_modules 📦
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Install dependencies 👨🏻‍💻
+        run: npm ci
+
+      # - name: Run linter 👀
+      #   run: npm run lint
+
+      - name: Build 🛠
+        run: npm run build
+
+      - name: Deploy to App Engine 🚀
+        id: Deploy
+        uses: google-github-actions/deploy-appengine@main
+        with:
+          deliverables: app.yaml
+          version: go-instore-menu
+          credentials: ${{ secrets.GCP_CREDENTIALS}}
+
+      - name: Test deploy 🔬
+        run: curl "${{ steps.deploy.outputs.url }}"
