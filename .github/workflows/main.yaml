@@ -2,14 +2,9 @@ name: CI/CD to Google App Engine
 
 on:
   push:
-  #   branches:
+    branches:
       - main
       - master
-  # pull_request:
-    branches:
-      # - production
-      # - main
-      # - master
 
 jobs:
   ci-cd:
